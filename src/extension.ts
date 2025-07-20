@@ -250,6 +250,8 @@ export class NetconfConnectionProvider implements vscode.TreeDataProvider<Netcon
 
     refresh(): void {
         // cleanup old connections:
+        const connectionsToRemove = this.connections.filter(c => !c.initializing && !c.running);
+        connectionsToRemove.forEach(c => c.logs.dispose());
         this.connections = this.connections.filter(c => c.initializing || c.running);
 
         // update user-interface
@@ -445,7 +447,7 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
         Date.now();
         this.events = [];
 
-        this.logs = new ExtensionLogger(`netconf | ${server.id}`);
+        this.logs = new ExtensionLogger(`netconf | ${server.id} (initializing)`);
         this.client = new ncclient(this.logs);
 
         this.logs.info(`Connecting to ${this.user}@${this.host}...`);
@@ -487,6 +489,10 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
             this.sessionId = sessionId;
             this.description = `#${sessionId} ${this.description}`;
 
+            const oldLogger = this.logs;
+            this.logs = new ExtensionLogger(`netconf | ${server.id} #${sessionId}`);
+            oldLogger.dispose();
+
             this.refresh();
         });
 
@@ -494,6 +500,7 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
             this.logs.info('session disconnected');
             this.running = false;
             this.initializing = false;
+            this.logs.dispose();
             if (selection === this)
                 this.spotlight(false);
             else
