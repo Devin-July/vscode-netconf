@@ -70,4 +70,8 @@ export class ExtensionLogger implements Logger {
     show(): void {
         this.logs.show();
     }
+
+    dispose(): void {
+        this.logs.dispose();
+    }
 }

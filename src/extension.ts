@@ -487,6 +487,10 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
             this.sessionId = sessionId;
             this.description = `#${sessionId} ${this.description}`;
 
+            this.logs.dispose();
+            this.logs = new ExtensionLogger(`netconf | ${this.label} #${sessionId}`);
+            this.client.logger = this.logs;
+
             this.refresh();
         });
 
@@ -498,6 +502,8 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
                 this.spotlight(false);
             else
                 this.refresh();
+            
+            this.logs.dispose();
         });
 
         this.client.on('locked', () => {
