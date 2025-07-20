@@ -251,7 +251,10 @@ export class NetconfConnectionProvider implements vscode.TreeDataProvider<Netcon
     refresh(): void {
         // cleanup old connections:
         const connectionsToRemove = this.connections.filter(c => !c.initializing && !c.running);
-        connectionsToRemove.forEach(c => c.logs.dispose());
+        connectionsToRemove.forEach(c => {
+            console.log(`[DEBUG] Disposing logger in refresh()`);
+            c.logs.dispose();
+        });
         this.connections = this.connections.filter(c => c.initializing || c.running);
 
         // update user-interface
@@ -448,6 +451,7 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
         this.events = [];
 
         this.logs = new ExtensionLogger(`netconf | ${server.id} (initializing)`);
+        console.log(`[DEBUG] Created temporary logger: netconf | ${server.id} (initializing)`);
         this.client = new ncclient(this.logs);
 
         this.logs.info(`Connecting to ${this.user}@${this.host}...`);
@@ -491,7 +495,9 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
 
             const oldLogger = this.logs;
             this.logs = new ExtensionLogger(`netconf | ${server.id} #${sessionId}`);
+            console.log(`[DEBUG] Replaced temporary logger with session-specific logger: netconf | ${server.id} #${sessionId}`);
             oldLogger.dispose();
+            console.log(`[DEBUG] Disposed temporary logger`);
 
             this.refresh();
         });
@@ -500,6 +506,7 @@ export class NetconfConnectionEntry extends vscode.TreeItem {
             this.logs.info('session disconnected');
             this.running = false;
             this.initializing = false;
+            console.log(`[DEBUG] Disposing logger on disconnect`);
             this.logs.dispose();
             if (selection === this)
                 this.spotlight(false);
